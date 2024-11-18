@@ -9,5 +9,7 @@ class ExportADFOperator(bpy.types.Operator):
         # get meshes, materials, textures
         # use fbx export to get models
         # export ADF file
-        return
+
+        adf_utils.adf_write("file.adf")
+        return {"FINISHED"}
 

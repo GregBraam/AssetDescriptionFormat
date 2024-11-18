@@ -1,4 +1,7 @@
 
+import tempfile
+import os
+import bpy
 
 file_header = "ADF "
 version = 0
@@ -22,16 +25,35 @@ def chunk_bytes(chunk_id,type,data=None):
 
 def adf_write(path,models=0,textures=0,materials=0,data=None):
 
-    with open(path,"wb") as file:
-        file.write(header_bytes(models,textures,materials))
-
-    # For every model
+    # For models
     # Create file chunk and append to file
-
+    obj = get_meshes()
     # For every Texture
     # Create file chunk and append to file
 
     # For every Material
     # Create file chunk and append to file
+    
+    with open(path,"wb") as file:
+        file.write(header_bytes(models,textures,materials))
+        file.write(obj)
+        
 
-adf_write("file.adf")
+def get_meshes():
+    # Existing mesh exports write straight to a file
+    with tempfile.NamedTemporaryFile(suffix=".obj", delete = False) as temp_file:
+        temp_file_path = temp_file.name
+
+    bpy.ops.wm.obj_export(
+        filepath = temp_file_path,
+        export_selected_objects = True,
+        export_materials = False,
+        export_pbr_extensions = False
+        )
+    
+    with open(temp_file_path, "rb") as f:
+        obj_data = f.read()
+
+    os.remove(temp_file_path)
+
+    return obj_data
