@@ -3,31 +3,43 @@ import tempfile
 import os
 import bpy
 
-file_header = "ADF "
-version = 0
+FILE_HEADER = "ADF "
+VERSION = 0
 
-def header_bytes(models=0,textures=0,materials=0):
-    f_bytes = bytearray(file_header,"utf-8")
-    f_bytes.append(version)
+def header_bytes(model_count=0,texture_count=0,material_count=0):
+    f_bytes = bytearray(FILE_HEADER,"utf-8")
+    f_bytes.append(VERSION)
 
-    models_4_bytes = models.to_bytes(4,byteorder="little")
-    textures_4_bytes = textures.to_bytes(4,byteorder="little")
-    materials_4_bytes = materials.to_bytes(4,byteorder="little")
+    model_count_bytes = model_count.to_bytes(4,byteorder="little")
+    texture_count_bytes = texture_count.to_bytes(4,byteorder="little")
+    material_count_bytes = material_count.to_bytes(4,byteorder="little")
 
-    f_bytes += (models_4_bytes + textures_4_bytes + materials_4_bytes)
+    f_bytes += (model_count_bytes + texture_count_bytes + material_count_bytes)
 
     return f_bytes
 
-def chunk_bytes(chunk_id,type,data=None):
+def chunk_bytes(data,chunk_id,chunk_type):
     # Calculate chunk length from data
     # Length(4Bytes), ID(4Bytes), Type (1byte), Data
-    return
+
+    chunk_bytes = bytearray()
+
+    length = len(data)
+    
+    length_bytes = length.to_bytes(4,byteorder="little")
+    chunk_id_bytes = chunk_id.to_bytes(4,byteorder="little")
+    chunk_type_bytes = chunk_type.to_bytes(1,byteorder="little")
+
+    chunk_bytes += (length_bytes + chunk_id_bytes + chunk_type_bytes + data)
+
+    return chunk_bytes
 
 def adf_write(path,models=0,textures=0,materials=0,data=None):
 
     # For models
     # Create file chunk and append to file
     obj = get_meshes()
+    model_chunk_bytes = chunk_bytes(obj,0,0)
     # For every Texture
     # Create file chunk and append to file
 
@@ -36,7 +48,7 @@ def adf_write(path,models=0,textures=0,materials=0,data=None):
     
     with open(path,"wb") as file:
         file.write(header_bytes(models,textures,materials))
-        file.write(obj)
+        file.write(model_chunk_bytes)
         
 
 def get_meshes():

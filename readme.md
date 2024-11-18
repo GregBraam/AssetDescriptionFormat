@@ -15,13 +15,18 @@
 - **Chunk Type** (1 Bytes) Model, Texture, Materials reprentation JSON and Objects JSON
 - **Chunk Data** 
 
-## Model chunk
-
-FBX or OBJ
-
-## Texture chunk
-
-A texture chunk for every image texture, storing it as png.
+| Main type| Chunk type ID | Description |
+| - | - | - |
+| Model | 0 | OBJ models |
+|  | 1 | FBX models |
+|  | 2-15 | Reserved for model chunk types |
+| Texture | 16 | PNG textures |
+|  | 17 | JPG textures |
+|  | 18-31 | Reserved for texture chunk types |
+| Material | 32 | Material JSON representation chunk type |
+|  | 33-47| Unused |
+| Objects | 48 | Object JSON representation chunk type |
+|  | 49-255 | Unused |
 
 ## Material JSON
 
