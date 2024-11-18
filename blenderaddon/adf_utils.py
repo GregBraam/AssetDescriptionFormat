@@ -34,27 +34,6 @@ def chunk_bytes(data,chunk_id,chunk_type):
 
     return chunk_bytes
 
-def adf_write(path,models=0,textures=0,materials=0,data=None):
-
-    objects = bpy.context.selected_objects
-
-    # Create model chunk
-    obj = get_meshes()
-    model_chunk_bytes = chunk_bytes(obj,0,0)
-
-    # For every Material
-    # Create file chunk and append to file
-
-    get_materials(objects)
-
-    # For every Texture
-    # Create file chunk and append to file
-
-    with open(path,"wb") as file:
-        file.write(header_bytes(models,textures,materials))
-        file.write(model_chunk_bytes)
-        
-
 def get_meshes():
     # Existing mesh exports write straight to a file
     with tempfile.NamedTemporaryFile(suffix=".obj", delete = False) as temp_file:
@@ -78,6 +57,30 @@ def get_meshes():
 def get_materials(objects):
     for obj in objects:
         for material_slot in obj.material_slots:
-            for material in material_slot.material:
-                print(material.node_tree.nodes)
-    return 
+            material = material_slot.material
+            #print(material.node_tree.nodes)
+    return
+
+def adf_write(path,models=0,textures=0,materials=0,data=None):
+
+    objects = bpy.context.selected_objects
+
+    # Create model chunk
+    obj = get_meshes()
+    model_chunk_bytes = chunk_bytes(obj,0,0)
+
+    # For every Material
+    # Create file chunk and append to file
+
+    get_materials(objects)
+
+    # For every Texture
+    # Create file chunk and append to file
+
+    with open(path,"wb") as file:
+        file.write(header_bytes(models,textures,materials))
+        file.write(model_chunk_bytes)
+        
+def adf_read(path):
+    return
+ 
