@@ -17,7 +17,7 @@
 
 ## Model chunk
 
-FBX or other 3d file format.
+FBX or OBJ
 
 ## Texture chunk
 
