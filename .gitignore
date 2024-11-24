@@ -2,3 +2,4 @@
 *.hexproj
 *.adf
 file.adf
+/blenderaddon/__pycache__
