@@ -31,11 +31,9 @@ class ExportADFOperator(bpy.types.Operator, ExportHelper):
     ) # type: ignore
 
     def execute(self, context):
-
         # implemented by ExportHelper
         path = self.filepath
-        # Need to add export options
 
-        adf_utils.adf_write(path)
+        adf_utils.adf_write(path,self.export_selection)
         return {"FINISHED"}
 
