@@ -91,6 +91,19 @@ def get_materials(objects):
             #print(material.node_tree.nodes)
     return
 
+def get_textures(objects):
+    unique_textures = set()
+
+    for obj in objects:
+        if obj.type == "MESH":
+            for slot in obj.material_slots:
+                material = slot.material
+                if material.use_nodes:
+                    for node in material.node_tree.nodes:
+                        if node.bl_idname == "ShaderNodeTexImage":
+                            unique_textures.add(node)
+    return unique_textures
+
 def adf_write(path,export_selection):
 
     if export_selection:
@@ -98,9 +111,11 @@ def adf_write(path,export_selection):
     else:
         objects = bpy.context.scene.objects
 
-    models = get_number_of_models(objects)
-    textures = get_number_of_textures(objects)
-    materials = get_number_of_materials(objects)
+    textures = get_textures(objects)
+
+    number_of_models = get_number_of_models(objects)
+    number_of_textures = len(textures)
+    number_of_materials = get_number_of_materials(objects)
 
     obj_file_data = get_obj_file_data(export_selection)
     model_chunk_bytes = generate_chunk_bytes(obj_file_data,0,adf_types.ChunkType.MODEL_OBJ)
@@ -108,11 +123,22 @@ def adf_write(path,export_selection):
     # For every Material
     # Create file chunk and append to file
 
-    # For every Texture
-    # Create file chunk and append to file
+    # Factor this out into function
+    for texture in textures:
+        image = texture.image
+        format = image.file_format
+        with tempfile.NamedTemporaryFile(suffix=".file", delete = False) as temp_file:
+            temp_file_path = temp_file.name
+            image.save(temp_file_path)
+        with open(temp_file_path, "rb") as f:
+            texture_file_data = f.read()
+        # Generate chunk from data
+
+        os.remove(temp_file_path)
+
 
     with open(path,"wb") as file:
-        file.write(generate_header_bytes(models,textures,materials))
+        file.write(generate_header_bytes(number_of_models,number_of_textures,number_of_materials))
         file.write(model_chunk_bytes)
         
 def adf_read(path):
