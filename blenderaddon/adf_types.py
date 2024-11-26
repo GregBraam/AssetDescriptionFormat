@@ -7,3 +7,7 @@ class ChunkType(IntEnum):
     TEXTURE_JPG = 17
     MATERIALS_JSON = 32
     OBJECTS_JSON = 48
+
+class ImageFormat(IntEnum):
+    PNG = 16,
+    JPEG = 17

@@ -1,6 +1,6 @@
 
 import tempfile, os, bpy
-from . import adf_types
+from . import adf_types, id_counter
 
 FILE_HEADER_MAGIC = "ADF "
 VERSION = 0
@@ -52,6 +52,19 @@ def get_obj_file_data(export_selection):
 
     return obj_file_data
 
+def get_texture_data(texture):
+    image = texture.image
+    format = image.file_format
+    with tempfile.NamedTemporaryFile(suffix=".file", delete = False) as temp_file:
+        temp_file_path = temp_file.name
+        image.save(filepath=temp_file_path)
+    with open(temp_file_path, "rb") as f:
+        texture_file_data = f.read()
+
+    os.remove(temp_file_path)
+
+    return texture_file_data
+
 def get_number_of_models(objects):
     models = 0
 
@@ -61,6 +74,10 @@ def get_number_of_models(objects):
     return models
 
 def get_number_of_materials(objects):
+    unique_materials = get_materials(objects)
+    return len(unique_materials)
+
+def get_materials(objects):
     unique_materials = set()
 
     for obj in objects:
@@ -69,27 +86,11 @@ def get_number_of_materials(objects):
                 if slot.material:
                     unique_materials.add(slot.material)
 
-    return len(unique_materials)
+    return unique_materials
 
 def get_number_of_textures(objects):
-    unique_textures = set()
-
-    for obj in objects:
-        if obj.type == "MESH":
-            for slot in obj.material_slots:
-                material = slot.material
-                if material.use_nodes:
-                    for node in material.node_tree.nodes:
-                        if node.bl_idname == "ShaderNodeTexImage":
-                            unique_textures.add(node)
+    unique_textures = get_textures(objects)
     return len(unique_textures)
-
-def get_materials(objects):
-    for obj in objects:
-        for material_slot in obj.material_slots:
-            material = material_slot.material
-            #print(material.node_tree.nodes)
-    return
 
 def get_textures(objects):
     unique_textures = set()
@@ -120,26 +121,18 @@ def adf_write(path,export_selection):
     obj_file_data = get_obj_file_data(export_selection)
     model_chunk_bytes = generate_chunk_bytes(obj_file_data,0,adf_types.ChunkType.MODEL_OBJ)
 
-    # For every Material
-    # Create file chunk and append to file
-
-    # Factor this out into function
+    texture_chunks_bytes = []
+    counter = id_counter.IDCounter(1)
     for texture in textures:
-        image = texture.image
-        format = image.file_format
-        with tempfile.NamedTemporaryFile(suffix=".file", delete = False) as temp_file:
-            temp_file_path = temp_file.name
-            image.save(temp_file_path)
-        with open(temp_file_path, "rb") as f:
-            texture_file_data = f.read()
-        # Generate chunk from data
-
-        os.remove(temp_file_path)
-
+        texture_data = get_texture_data(texture)
+        print(type(texture.image.file_format))
+        texture_chunks_bytes.append(generate_chunk_bytes(texture_data,counter.next_id(),0))
 
     with open(path,"wb") as file:
         file.write(generate_header_bytes(number_of_models,number_of_textures,number_of_materials))
         file.write(model_chunk_bytes)
+        for tex_bytes in texture_chunks_bytes:
+            file.write(tex_bytes)
         
 def adf_read(path):
     return
