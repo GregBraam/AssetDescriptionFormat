@@ -52,12 +52,12 @@ def get_obj_file_data(export_selection):
 
     return obj_file_data
 
-def get_texture_data(texture):
+def get_texture_data(texture,quality):
     image = texture.image
     format = image.file_format
     with tempfile.NamedTemporaryFile(suffix=".file", delete = False) as temp_file:
         temp_file_path = temp_file.name
-        image.save(filepath=temp_file_path)
+        image.save(filepath=temp_file_path,quality=quality)
     with open(temp_file_path, "rb") as f:
         texture_file_data = f.read()
 
@@ -105,7 +105,7 @@ def get_textures(objects):
                             unique_textures.add(node)
     return unique_textures
 
-def adf_write(path,export_selection):
+def adf_write(path,export_selection,texture_quality):
 
     if export_selection:
         objects = bpy.context.selected_objects
@@ -124,7 +124,7 @@ def adf_write(path,export_selection):
     texture_chunks_bytes = []
     counter = id_counter.IDCounter(1)
     for texture in textures:
-        texture_data = get_texture_data(texture)
+        texture_data = get_texture_data(texture,texture_quality)
         print(type(texture.image.file_format))
         texture_chunks_bytes.append(generate_chunk_bytes(texture_data,counter.next_id(),0))
 
