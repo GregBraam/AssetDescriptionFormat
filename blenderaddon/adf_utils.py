@@ -1,6 +1,7 @@
 
 import tempfile, os, bpy
-from . import adf_types, id_counter
+from .adf_types import ChunkType,ImageFormat
+from .id_counter import IDCounter
 
 FILE_HEADER_MAGIC = "ADF "
 VERSION = 0
@@ -52,9 +53,34 @@ def get_obj_file_data(export_selection):
 
     return obj_file_data
 
-def get_texture_data(texture,quality):
+def change_image_file_format(image,export_format):
+    if export_format == "KEEP":
+        return image
+    export_format_type = ImageFormat[export_format]
+    match export_format_type:
+        case ImageFormat.PNG:
+            image.file_format = "PNG"
+        case ImageFormat.JPEG:
+            image.file_format = "JPEG"
+        case ImageFormat.JPEG2000:
+            image.file_format = "JPEG2000"
+        case ImageFormat.TARGA:
+            image.file_format = "TARGA"
+        case ImageFormat.TARGA_RAW:
+            image.file_format = "TARGA_RAW"
+        case ImageFormat.BMP:
+            image.file_format = "BMP"
+        case ImageFormat.IRIS:
+            image.file_format = "IRIS"
+        case _:
+            image.file_format = "PNG"
+
+    return image
+
+def get_texture_data(texture,quality,export_format):
     image = texture.image
-    format = image.file_format
+    image = change_image_file_format(image,export_format)
+    
     with tempfile.NamedTemporaryFile(suffix=".file", delete = False) as temp_file:
         temp_file_path = temp_file.name
         image.save(filepath=temp_file_path,quality=quality)
@@ -105,7 +131,7 @@ def get_textures(objects):
                             unique_textures.add(node)
     return unique_textures
 
-def adf_write(path,export_selection,texture_quality):
+def adf_write(path,export_selection,texture_quality,texture_format):
 
     if export_selection:
         objects = bpy.context.selected_objects
@@ -119,13 +145,12 @@ def adf_write(path,export_selection,texture_quality):
     number_of_materials = get_number_of_materials(objects)
 
     obj_file_data = get_obj_file_data(export_selection)
-    model_chunk_bytes = generate_chunk_bytes(obj_file_data,0,adf_types.ChunkType.MODEL_OBJ)
+    model_chunk_bytes = generate_chunk_bytes(obj_file_data,0,ChunkType.MODEL_OBJ)
 
     texture_chunks_bytes = []
-    counter = id_counter.IDCounter(1)
+    counter = IDCounter(1)
     for texture in textures:
-        texture_data = get_texture_data(texture,texture_quality)
-        print(type(texture.image.file_format))
+        texture_data = get_texture_data(texture,texture_quality,texture_format)
         texture_chunks_bytes.append(generate_chunk_bytes(texture_data,counter.next_id(),0))
 
     with open(path,"wb") as file:

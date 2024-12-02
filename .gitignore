@@ -4,3 +4,4 @@
 file.adf
 /blenderaddon/__pycache__
 *.blend
+*.hexpat
