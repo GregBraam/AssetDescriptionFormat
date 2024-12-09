@@ -117,6 +117,7 @@ def __get_texture_data(texture,quality,export_format):
     image = texture.image
     if not image.has_data:
         raise MissingImageData(image.name)
+    
     image = change_image_file_format(image,export_format)
     chunk_type = __get_image_chunk_type(image)
     

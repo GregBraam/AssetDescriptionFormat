@@ -69,6 +69,9 @@ class ExportADFOperator(bpy.types.Operator, ExportHelper):
         try:
             adf_write(path,export_selection,quality,texture_format)
         except MissingImageData as error:
-            self.report({"WARNING"}, f"Image {error.image_name} is missing data.")
+            self.report({"WARNING"}, f"Operation cancelled. Image {error.image_name} is missing data.")
+            return {"CANCELLED"}
+
+        self.report({"INFO"}, "File saved successfully.")
         return {"FINISHED"}
 
