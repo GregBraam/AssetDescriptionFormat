@@ -1,8 +1,6 @@
-
-
 import bpy
 from bpy_extras.io_utils import ExportHelper
-from .adf_utils import adf_write
+from .adf_write import adf_write
 
 
 class ExportADFOperator(bpy.types.Operator, ExportHelper):
