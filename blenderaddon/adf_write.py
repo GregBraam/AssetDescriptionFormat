@@ -12,22 +12,22 @@ def adf_write(path,export_selection,texture_quality,texture_format):
     else:
         objects = bpy.context.scene.objects
 
-    number_of_models = get_number_of_models(objects)
-    number_of_textures = get_number_of_textures(objects)
-    number_of_materials = get_number_of_materials(objects)
-    header_bytes = generate_header_bytes(number_of_models,number_of_textures,number_of_materials)
+    number_of_models = __get_number_of_models(objects)
+    number_of_textures = __get_number_of_textures(objects)
+    number_of_materials = __get_number_of_materials(objects)
+    header_bytes = __generate_header_bytes(number_of_models,number_of_textures,number_of_materials)
 
-    obj_file_data = get_obj_file_data(export_selection)
-    model_chunk_bytes = generate_chunk_bytes(obj_file_data,counter.next_id(),ChunkType.MODEL_OBJ)
+    obj_file_data = __get_obj_file_data(export_selection)
+    model_chunk_bytes = __generate_chunk_bytes(obj_file_data,counter.next_id(),ChunkType.MODEL_OBJ)
 
-    textures = get_textures(objects)
-    texture_chunks_bytes = generate_all_texture_bytes(textures, texture_quality, texture_format, counter)
+    textures = __get_textures(objects)
+    texture_chunks_bytes = __generate_all_texture_bytes(textures, texture_quality, texture_format, counter)
 
-    materials = get_materials(objects)
+    materials = __get_materials(objects)
     mat_nodes = bytearray(serialize_all_material_nodes(materials),"utf-8")
     mat_links = bytearray(serialize_all_material_links(materials),"utf-8")
-    nodes_chunk_bytes = generate_chunk_bytes(mat_nodes,counter.next_id(),ChunkType.MATERIALS_NODES_JSON)
-    links_chunk_bytes = generate_chunk_bytes(mat_links,counter.next_id(),ChunkType.MATERIALS_LINKS_JSON)
+    nodes_chunk_bytes = __generate_chunk_bytes(mat_nodes,counter.next_id(),ChunkType.MATERIALS_NODES_JSON)
+    links_chunk_bytes = __generate_chunk_bytes(mat_links,counter.next_id(),ChunkType.MATERIALS_LINKS_JSON)
 
     with open(path,"wb") as file:
         file.write(header_bytes)
@@ -40,7 +40,8 @@ def adf_write(path,export_selection,texture_quality,texture_format):
 
 #region header data collection
 
-def get_number_of_models(objects):
+def __get_number_of_models(objects):
+    """Number of objects selected."""
     models = 0
 
     for obj in objects:
@@ -48,7 +49,8 @@ def get_number_of_models(objects):
             models+=1
     return models
 
-def get_textures(objects):
+def __get_textures(objects):
+    """Returns collection of unique texture nodes in materials of objects."""
     unique_textures = set()
 
     for obj in objects:
@@ -61,11 +63,13 @@ def get_textures(objects):
                             unique_textures.add(node)
     return unique_textures
 
-def get_number_of_textures(objects):
-    unique_textures = get_textures(objects)
+def __get_number_of_textures(objects):
+    """Returns total number of unique texture nodes in materials of objects."""
+    unique_textures = __get_textures(objects)
     return len(unique_textures)
 
-def get_materials(objects):
+def __get_materials(objects):
+    """Returns collection of unique materials of objects."""
     unique_materials = set()
 
     for obj in objects:
@@ -76,16 +80,17 @@ def get_materials(objects):
 
     return unique_materials
 
-def get_number_of_materials(objects):
-    unique_materials = get_materials(objects)
+def __get_number_of_materials(objects):
+    """Returns total number of unique materials of objects."""
+    unique_materials = __get_materials(objects)
     return len(unique_materials)
 
 #endregion
 
 #region collecting data
 
-def get_obj_file_data(export_selection):
-    # Existing mesh exports write straight to a file
+def __get_obj_file_data(export_selection):
+    """Returns the bytes of an obj file export without saving the obj seperately."""
     with tempfile.NamedTemporaryFile(suffix=".obj", delete = False) as temp_file:
         temp_file_path = temp_file.name
 
@@ -103,10 +108,11 @@ def get_obj_file_data(export_selection):
 
     return obj_file_data
 
-def get_texture_data(texture,quality,export_format):
+def __get_texture_data(texture,quality,export_format):
+    """Returns bytes of image save without saving as external file, and returns chunk type."""
     image = texture.image
     image = change_image_file_format(image,export_format)
-    chunk_type = get_image_chunk_type(image)
+    chunk_type = __get_image_chunk_type(image)
     
     with tempfile.NamedTemporaryFile(suffix=".file", delete = False) as temp_file:
         temp_file_path = temp_file.name
@@ -122,7 +128,8 @@ def get_texture_data(texture,quality,export_format):
 
 #region creating chunks
 
-def generate_chunk_bytes(data,chunk_id,chunk_type):
+def __generate_chunk_bytes(data,chunk_id,chunk_type):
+    """Create bytes of generic chunk."""
     # Calculate chunk length from data
     # Length(4Bytes), ID(4Bytes), Type (1byte), Data
     chunk_bytes = bytearray()
@@ -137,7 +144,8 @@ def generate_chunk_bytes(data,chunk_id,chunk_type):
 
     return chunk_bytes
 
-def generate_header_bytes(model_count,texture_count,material_count):
+def __generate_header_bytes(model_count,texture_count,material_count):
+    """Create bytes of the header chunk."""
     f_bytes = bytearray(FILE_HEADER_MAGIC,"utf-8")
     f_bytes.append(VERSION)
 
@@ -149,15 +157,17 @@ def generate_header_bytes(model_count,texture_count,material_count):
 
     return f_bytes
 
-def generate_all_texture_bytes(textures, texture_quality, texture_format, counter):
+def __generate_all_texture_bytes(textures, texture_quality, texture_format, counter):
+    """Generates a list of texture chunks, for every texture"""
     texture_chunks_bytes = []
     for texture in textures:
-        texture_data, chunk_type = get_texture_data(texture,texture_quality,texture_format)
-        texture_chunks_bytes.append(generate_chunk_bytes(texture_data,counter.next_id(),chunk_type))
+        texture_data, chunk_type = __get_texture_data(texture,texture_quality,texture_format)
+        texture_chunks_bytes.append(__generate_chunk_bytes(texture_data,counter.next_id(),chunk_type))
 
     return texture_chunks_bytes
 
-def get_image_chunk_type(image):
+def __get_image_chunk_type(image):
+    """Convert from blenders image format string, to an ImageFormat enum"""
     # TODO: Error when image.format is not set
     chunk_type = ImageFormat[image.file_format]
     return chunk_type
