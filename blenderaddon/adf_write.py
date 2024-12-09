@@ -2,6 +2,7 @@ import tempfile, os, bpy
 from .adf_types import ChunkType,ImageFormat
 from .id_counter import IDCounter
 from .adf_utils import FILE_HEADER_MAGIC, VERSION
+from .serialize_utils import serialize_all_material_links,serialize_all_material_nodes
 
 def adf_write(path,export_selection,texture_quality,texture_format):
     counter = IDCounter(1)
@@ -22,11 +23,20 @@ def adf_write(path,export_selection,texture_quality,texture_format):
     textures = get_textures(objects)
     texture_chunks_bytes = generate_all_texture_bytes(textures, texture_quality, texture_format, counter)
 
+    materials = get_materials(objects)
+    mat_nodes = bytearray(serialize_all_material_nodes(materials),"utf-8")
+    mat_links = bytearray(serialize_all_material_links(materials),"utf-8")
+    nodes_chunk_bytes = generate_chunk_bytes(mat_nodes,counter.next_id(),ChunkType.MATERIALS_NODES_JSON)
+    links_chunk_bytes = generate_chunk_bytes(mat_links,counter.next_id(),ChunkType.MATERIALS_LINKS_JSON)
+
     with open(path,"wb") as file:
         file.write(header_bytes)
         file.write(model_chunk_bytes)
         for tex_bytes in texture_chunks_bytes:
             file.write(tex_bytes)
+
+        file.write(nodes_chunk_bytes)
+        file.write(links_chunk_bytes)
 
 #region header data collection
 
