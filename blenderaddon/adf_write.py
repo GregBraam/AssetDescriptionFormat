@@ -3,6 +3,7 @@ from .adf_types import ChunkType,ImageFormat
 from .id_counter import IDCounter
 from .adf_utils import FILE_HEADER_MAGIC, VERSION
 from .serialize_utils import serialize_all_material_links,serialize_all_material_nodes
+from .adf_errors import MissingImageData
 
 def adf_write(path,export_selection,texture_quality,texture_format):
     counter = IDCounter(1)
@@ -21,7 +22,10 @@ def adf_write(path,export_selection,texture_quality,texture_format):
     model_chunk_bytes = __generate_chunk_bytes(obj_file_data,counter.next_id(),ChunkType.MODEL_OBJ)
 
     textures = __get_textures(objects)
-    texture_chunks_bytes = __generate_all_texture_bytes(textures, texture_quality, texture_format, counter)
+    try:
+        texture_chunks_bytes = __generate_all_texture_bytes(textures, texture_quality, texture_format, counter)
+    except MissingImageData as error:
+        raise error
 
     materials = __get_materials(objects)
     mat_nodes = bytearray(serialize_all_material_nodes(materials),"utf-8")
@@ -111,6 +115,8 @@ def __get_obj_file_data(export_selection):
 def __get_texture_data(texture,quality,export_format):
     """Returns bytes of image save without saving as external file, and returns chunk type."""
     image = texture.image
+    if not image.has_data:
+        raise MissingImageData(image.name)
     image = change_image_file_format(image,export_format)
     chunk_type = __get_image_chunk_type(image)
     
@@ -161,7 +167,11 @@ def __generate_all_texture_bytes(textures, texture_quality, texture_format, coun
     """Generates a list of texture chunks, for every texture"""
     texture_chunks_bytes = []
     for texture in textures:
-        texture_data, chunk_type = __get_texture_data(texture,texture_quality,texture_format)
+        try:
+            texture_data, chunk_type = __get_texture_data(texture,texture_quality,texture_format)
+        except MissingImageData as error:
+            raise error
+
         texture_chunks_bytes.append(__generate_chunk_bytes(texture_data,counter.next_id(),chunk_type))
 
     return texture_chunks_bytes

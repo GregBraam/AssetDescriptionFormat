@@ -1,6 +1,7 @@
 import bpy
 from bpy_extras.io_utils import ExportHelper
 from .adf_write import adf_write
+from .adf_errors import MissingImageData
 
 
 class ExportADFOperator(bpy.types.Operator, ExportHelper):
@@ -65,7 +66,9 @@ class ExportADFOperator(bpy.types.Operator, ExportHelper):
         export_selection = self.export_selection
         quality = self.texture_quality
         texture_format = self.texture_format
-
-        adf_write(path,export_selection,quality,texture_format)
+        try:
+            adf_write(path,export_selection,quality,texture_format)
+        except MissingImageData as error:
+            self.report({"WARNING"}, f"Image {error.image_name} is missing data.")
         return {"FINISHED"}
 
