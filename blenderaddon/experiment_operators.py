@@ -1,4 +1,4 @@
-import bpy
+import bpy # type: ignore[import-untyped]
 import json
 from .adf_write import __get_materials
 from . import serialize_utils

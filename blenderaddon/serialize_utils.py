@@ -1,4 +1,4 @@
-import bpy
+import bpy # type: ignore[import-untyped]
 import json
 
 def serialize_all_material_nodes(materials):

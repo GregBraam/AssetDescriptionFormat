@@ -1,5 +1,5 @@
 
-import bpy
+import bpy # type: ignore[import-untyped]
 from .adf_export import ExportADFOperator
 from .adf_import import ImportADFOperator
 from .experiment_operators import SerializeMaterialOperator

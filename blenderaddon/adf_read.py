@@ -3,7 +3,9 @@ from .adf_utils import FILE_HEADER_MAGIC
 from .header_data import HeaderData
 from .model_data import ModelData
 
-def adf_read(file_path):
+import string
+
+def adf_read(file_path: str):
     with open(file_path,"rb") as file:
         data = file.read()
 
@@ -11,12 +13,12 @@ def adf_read(file_path):
     model_data = __get_model_data(data)
 
     # get textures and instantiate images in blender
-    # get materials data
+    # get materials data\
     # instantiate material, instantiate nodes and then connect them with links
 
     return
 
-def __get_header_data(data):
+def __get_header_data(data: bytes) -> HeaderData:
     """Gets the header chunk data from the bytes of an ADF file."""
     magic = data[0:4].decode("utf-8")
     version = data[4]
@@ -26,7 +28,7 @@ def __get_header_data(data):
 
     return HeaderData(magic,version,models,textures,materials)
 
-def __get_model_data(data):
+def __get_model_data(data: bytes) -> ModelData:
     """Get all model data from the bytes of an ADF file."""
     chunk_length = int.from_bytes(data[17:21],byteorder="little")
     chunk_identifier = int.from_bytes(data[21:25],byteorder="little")
@@ -35,8 +37,11 @@ def __get_model_data(data):
 
     return ModelData(chunk_length,chunk_identifier,chunk_type,chunk_data)
 
-def __get_all_texture_data():
+def __get_all_texture_data(data: bytes,header_data: HeaderData):
     """Get all textures from an adf file"""
+    
+    for i in range(0,header_data.textures):
+        return
     # Will need an offset for this
     # For number of textures peform get_texture_data
     return

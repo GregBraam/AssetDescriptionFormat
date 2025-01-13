@@ -1,5 +1,5 @@
-import bpy
-from bpy_extras.io_utils import ExportHelper
+import bpy # type: ignore[import-untyped]
+from bpy_extras.io_utils import ExportHelper # type: ignore[import-not-found]
 from .adf_write import adf_write
 from .adf_errors import MissingImageData
 
@@ -11,25 +11,25 @@ class ExportADFOperator(bpy.types.Operator, ExportHelper):
     # default extension
     filename_ext = ".adf"
 
-    filter_glob: bpy.props.StringProperty(
+    filter_glob: bpy.props.StringProperty( # type: ignore[valid-type]
         default="*.adf",
         options={"HIDDEN"},
         maxlen=255
-    ) # type: ignore
+    )
 
-    export_materials: bpy.props.BoolProperty(
+    export_materials: bpy.props.BoolProperty( # type: ignore[valid-type]
         name = "Export Materials",
         description = "Include materials and textures in export.",
         default=True
-    ) # type: ignore
+    )
 
-    export_selection: bpy.props.BoolProperty(
+    export_selection: bpy.props.BoolProperty( # type: ignore[valid-type]
         name = "Export Selection",
         description = "Export only selected objects.",
         default=True
-    ) # type: ignore
+    )
 
-    texture_format: bpy.props.EnumProperty(
+    texture_format: bpy.props.EnumProperty( # type: ignore[valid-type]
         items = [
             ("PNG", "PNG", "Save all textures as PNG."),
             ("JPEG", "JPEG", "Save all textures as JPEG."),
@@ -41,23 +41,23 @@ class ExportADFOperator(bpy.types.Operator, ExportHelper):
             ("KEEP", "Keep", "Keep texture format for all textures.")],
         name = "Texture Format",
         description = "Format to save all textures as."
-    ) # type: ignore
+    )
 
-    texture_quality: bpy.props.IntProperty(
+    texture_quality: bpy.props.IntProperty( # type: ignore[valid-type]
         name = "Texture Quality",
         description = "Texture quality for JPEG formats. 100 is highest quality, 0 is lowest quality.",
         subtype = "PERCENTAGE",
         default = 90,
         min = 0,
         max = 100
-    ) # type: ignore
+    )
 
-    mesh_format: bpy.props.EnumProperty(
+    mesh_format: bpy.props.EnumProperty( # type: ignore[valid-type]
         items = [
             ("OBJ","OBJ","Save all meshes as OBJ.")],
         name = "Mesh Format",
         description = "Format to save meshes as."
-    ) # type: ignore
+    )
 
     def execute(self, context):
         # implemented by ExportHelper
