@@ -9,6 +9,11 @@ def adf_read(file_path):
 
     header_data = __get_header_data(data)
     model_data = __get_model_data(data)
+
+    # get textures and instantiate images in blender
+    # get materials data
+    # instantiate material, instantiate nodes and then connect them with links
+
     return
 
 def __get_header_data(data):
@@ -30,4 +35,30 @@ def __get_model_data(data):
 
     return ModelData(chunk_length,chunk_identifier,chunk_type,chunk_data)
 
+def __get_all_texture_data():
+    """Get all textures from an adf file"""
+    # Will need an offset for this
+    # For number of textures peform get_texture_data
+    return
 
+def __get_texture_data():
+    """Get a single texture from adf file"""
+    # Will need an offset for this
+    return 
+
+def __get_all_material_data():
+    """Get all materials"""
+    # Will need an offset for this
+    return
+
+def __get_material_data():
+    """Get a single material"""
+    return
+
+def __get_nodes_data():
+    """Get the node chunk data."""
+    return
+
+def __get_links_data():
+    """Get the links chunk data."""
+    return
