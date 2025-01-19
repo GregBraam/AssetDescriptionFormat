@@ -9,7 +9,7 @@ class ImportADFOperator(bpy.types.Operator, ImportHelper):
     bl_label = "Import ADF"
 
     filename_ext = ".adf"
-    filter_glob = bpy.props.StringProperty(
+    filter_glob: bpy.props.StringProperty( # type: ignore[valid-type]
         default="*.adf",
         options={"HIDDEN"},
         maxlen=255

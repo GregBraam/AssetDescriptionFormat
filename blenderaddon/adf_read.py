@@ -1,3 +1,4 @@
+import bpy # type: ignore[import-untyped]
 from . import adf_utils
 from .adf_utils import FILE_HEADER_MAGIC
 from .header_data import HeaderData
@@ -11,6 +12,9 @@ def adf_read(file_path: str):
 
     header_data = __get_header_data(data)
     model_data = __get_model_data(data)
+
+    texture_offset = model_data.chunk_length + 26
+    __get_texture_data(data,texture_offset)
 
     # get textures and instantiate images in blender
     # get materials data\
@@ -46,10 +50,17 @@ def __get_all_texture_data(data: bytes,header_data: HeaderData):
     # For number of textures peform get_texture_data
     return
 
-def __get_texture_data():
+def __get_texture_data(data: bytes, offset: int) -> bytes:
     """Get a single texture from adf file"""
-    # Will need an offset for this
-    return 
+    chunk_length = int.from_bytes(data[offset:offset+4],byteorder="little")
+
+    bpy.ops.adf.log(message="Getting tex data!")
+
+    chunk_identifier = int.from_bytes(data[offset+4:offset+8],byteorder="little")
+    chunk_type = data[offset+8]
+    chunk_data = data[offset+8:offset+8+chunk_length]
+    
+    return chunk_data
 
 def __get_all_material_data():
     """Get all materials"""
