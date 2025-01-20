@@ -12,6 +12,7 @@ class ChunkType(IntEnum):
     TEXTURE_IRIS = 22
     MATERIALS_NODES_JSON = 32
     MATERIALS_LINKS_JSON = 33
+    MATERIALS_TEXTURES_JSON = 34
     OBJECTS_JSON = 48
 
 class ImageFormat(IntEnum):

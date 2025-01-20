@@ -77,8 +77,6 @@ def __instantiate_images(texture_data_collection: list[bytes]):
 def __instantiate_image(texture_data: bytes):
     return
 
-
-
 def __get_all_material_data():
     """Get all materials"""
     # Will need an offset for this

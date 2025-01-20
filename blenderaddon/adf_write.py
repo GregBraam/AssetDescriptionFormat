@@ -7,6 +7,7 @@ from .serialize_utils import serialize_all_material_links,serialize_all_material
 from .adf_errors import MissingImageData
 
 import string
+import json
 
 def adf_write(path: str,export_selection,texture_quality: int,texture_format):
     counter = IDCounter(1)
@@ -36,6 +37,9 @@ def adf_write(path: str,export_selection,texture_quality: int,texture_format):
     nodes_chunk_bytes = __generate_chunk_bytes(mat_nodes,counter.next_id(),ChunkType.MATERIALS_NODES_JSON)
     links_chunk_bytes = __generate_chunk_bytes(mat_links,counter.next_id(),ChunkType.MATERIALS_LINKS_JSON)
 
+    texture_names_bytes = bytearray(__get_texture_names(textures),"utf-8")
+    texture_names_chunk_bytes = __generate_chunk_bytes(texture_names_bytes,counter.next_id(),ChunkType.MATERIALS_TEXTURES_JSON)
+
     with open(path,"wb") as file:
         file.write(header_bytes)
         file.write(model_chunk_bytes)
@@ -43,6 +47,7 @@ def adf_write(path: str,export_selection,texture_quality: int,texture_format):
 
         file.write(nodes_chunk_bytes)
         file.write(links_chunk_bytes)
+        file.write(texture_names_chunk_bytes)
 
 #region header data collection
 
@@ -55,9 +60,9 @@ def __get_number_of_models(objects: list[bpy.types.Object]) -> int:
             models+=1
     return models
 
-def __get_textures(objects: list[bpy.types.Object]) -> set[bpy.types.Node]:
+def __get_textures(objects: list[bpy.types.Object]) -> list[bpy.types.Node]:
     """Returns collection of unique texture nodes in materials of objects."""
-    unique_textures = set()
+    unique_textures: list[bpy.types.Node] = []
 
     for obj in objects:
         if obj.type == "MESH":
@@ -66,7 +71,7 @@ def __get_textures(objects: list[bpy.types.Object]) -> set[bpy.types.Node]:
                 if material.use_nodes:
                     for node in material.node_tree.nodes:
                         if node.bl_idname == "ShaderNodeTexImage":
-                            unique_textures.add(node)
+                            unique_textures.append(node)
     return unique_textures
 
 def __get_number_of_textures(objects: list[bpy.types.Object]) -> int:
@@ -74,15 +79,15 @@ def __get_number_of_textures(objects: list[bpy.types.Object]) -> int:
     unique_textures = __get_textures(objects)
     return len(unique_textures)
 
-def __get_materials(objects: list[bpy.types.Object]) -> set[bpy.types.Material]:
+def __get_materials(objects: list[bpy.types.Object]) -> list[bpy.types.Material]:
     """Returns collection of unique materials of objects."""
-    unique_materials = set()
+    unique_materials: bpy.types.Material = []
 
     for obj in objects:
         if obj.type == "MESH":
             for slot in obj.material_slots:
                 if slot.material:
-                    unique_materials.add(slot.material)
+                    unique_materials.append(slot.material)
 
     return unique_materials
 
@@ -133,6 +138,20 @@ def __get_texture_data(texture: bpy.types.Texture,quality: int,export_format) ->
 
     return texture_file_data, chunk_type
 
+def __get_texture_names(textures: list[bpy.types.Texture]) -> str:
+    """Returns the bytes of the json representation of every textures name."""
+    # for every texture
+    # add to a list
+    # then json dump
+
+    texture_names: list[str] = []
+
+    for tex in textures:
+        texture_names.append(tex.name)
+
+    json_string: str = json.dumps(texture_names,indent=4)
+    return json_string
+
 #endregion 
 
 #region creating chunks
@@ -166,7 +185,7 @@ def __generate_header_bytes(model_count: int,texture_count: int,material_count: 
 
     return bytes(f_bytes)
 
-def __generate_all_texture_bytes(textures: set[bpy.types.Image], texture_quality: int, texture_format: str, counter: IDCounter) -> bytes:
+def __generate_all_texture_bytes(textures: list[bpy.types.Image], texture_quality: int, texture_format: str, counter: IDCounter) -> bytes:
     """Generates a list of texture chunks, for every texture"""
     texture_chunks_bytes = bytearray()
     for texture in textures:
