@@ -1,0 +1,19 @@
+To Do:
+	implement instantiation of images from tex data (Partial)
+	implement get material data
+	implement instantiation of materials from mat data
+	implement get mesh data
+	implement instantiation of models from mesh data
+	
+Working On:
+	organize chunks into their types by chunk_id
+	
+Done:
+	Reimplement chunk reading, to get all chunks (except header). 
+	more type hinting
+	implement get texture data functions
+	redo markdown of material rep
+	Reimplement logging
+	
+	
+	
