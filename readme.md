@@ -23,49 +23,80 @@
 | Texture | 16 | PNG textures |
 |  | 17 | JPG textures |
 |  | 18-31 | Reserved for texture chunk types |
-| Material | 32 | Material JSON representation chunk type |
-|  | 33-47| Unused |
+| Material | 32 | Material nodes JSON chunk |
+|  | 33 | Material links JSON chunk |
+|  | 34-47 | Unused |
 | Objects | 48 | Object JSON representation chunk type |
 |  | 49-255 | Unused |
 
 ## Material JSON
 
-JSON representation of all materials
-```json
-{
-    "materials": [
-        {
-            "material_name": "material_1",
-            "material_id": "0",
-            "properties": {
-                "base_color": {
-                    "value": [1,1,1,0]
-                },
-                "metallic": {
-                    "value": 0.8
-                },
-                "roughness": {
-                    "value": 0.4
-                },
-                "normal": {
-                    "texture": "material_1_normal.png",
-                    "chunk_id": 2
-                },
-                "ambient_occlusion":{
-                },
-                "specular":{
-                },
-                "displacement":{
-                },
-                "emissive":{
-                },
-                "uv_scale":{
-                }
-            }
-        }
-    ]
+There are 2 parts to the representation of a material. The nodes that make up the material, and the links between the nodes of a material. The nodes and the links are stored in seperate chunks.
 
-}
+### Example of material nodes JSON
+```json
+[
+    {
+        "SimpleTex": [
+            {
+                "name": "Material Output",
+                "type": "OUTPUT_MATERIAL"
+            },
+            {
+                "name": "Principled BSDF",
+                "type": "BSDF_PRINCIPLED"
+            },
+            {
+                "name": "Image Texture",
+                "type": "TEX_IMAGE"
+            }
+        ]
+    },
+    {
+        "SimpleMat": [
+            {
+                "name": "Principled BSDF",
+                "type": "BSDF_PRINCIPLED"
+            },
+            {
+                "name": "Material Output",
+                "type": "OUTPUT_MATERIAL"
+            }
+        ]
+    }
+]
+```
+
+### Example of material links JSON
+```json
+[
+    {
+        "SimpleTex": [
+            {
+                "from_node": "Principled BSDF",
+                "from_socket": "BSDF",
+                "to_node": "Material Output",
+                "to_socket": "Surface"
+            },
+            {
+                "from_node": "Image Texture",
+                "from_socket": "Color",
+                "to_node": "Principled BSDF",
+                "to_socket": "Base Color"
+            }
+        ]
+    },
+    {
+        "SimpleMat": [
+            {
+                "from_node": "Principled BSDF",
+                "from_socket": "BSDF",
+                "to_node": "Material Output",
+                "to_socket": "Surface"
+            }
+        ]
+    }
+]
 ```
 
 ## Objects JSON

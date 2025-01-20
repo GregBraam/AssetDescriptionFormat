@@ -3,7 +3,6 @@ import bpy # type: ignore[import-untyped]
 from .adf_export import ExportADFOperator
 from .adf_import import ImportADFOperator
 from .experiment_operators import SerializeMaterialOperator
-from .adf_log import ADFLogOperator
 
 def add_import_menu(self,context):
     self.layout.operator(ImportADFOperator.bl_idname, text = "ADF (.adf)")
@@ -15,7 +14,6 @@ classes = (
     ExportADFOperator,
     ImportADFOperator,
     SerializeMaterialOperator,
-    ADFLogOperator
 )
 
 def register():
