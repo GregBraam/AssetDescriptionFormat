@@ -4,6 +4,7 @@ from .adf_utils import FILE_HEADER_MAGIC
 from .header_data import HeaderData
 from .generic_chunk_data import GenericChunkData
 from .adf_log import log
+from .adf_types import ChunkType
 import tempfile, os
 
 import string
@@ -52,6 +53,16 @@ def __get_header_data(data: bytes) -> HeaderData:
     materials = int.from_bytes(data[13:17],byteorder="little")
 
     return HeaderData(magic,version,models,textures,materials)
+
+def __organize_chunks(chunks: list[GenericChunkData]):
+    model_chunk = None
+    texture_chunks: list[GenericChunkData] = []
+    for c in chunks:
+        if (c.chunk_type >= ChunkType.MODEL_OBJ) and (c.chunk_type <= ChunkType.MODEL_FBX):
+            model_chunk = c
+        elif (c.chunk_type >= ChunkType.TEXTURE_PNG) and (c.chunk_type <= ChunkType.TEXTURE_IRIS):
+            texture_chunks.append(c)
+        #repeat for nodes, links, tex names
 
 def __instantiate_images(texture_data_collection: list[bytes]):
     for tex in texture_data_collection:

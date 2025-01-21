@@ -3,7 +3,7 @@ name: Create Release
 on:
   push:
     branches:
-      - main
+      - release
 
 jobs:
   create-package:
@@ -23,6 +23,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: releases/adf_addon.zip
-          tags: ${{ github.sha }}
+          tag: ${{ github.sha }}
           name: Release ${{ github.sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
