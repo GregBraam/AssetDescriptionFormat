@@ -9,6 +9,8 @@ jobs:
   create-package:
     name: Create and Publish Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -19,10 +21,15 @@ jobs:
           mkdir -p releases
           zip -r releases/adf_addon.zip blenderaddon
 
+      - name: Verify Zip
+        run: ls -l releases
+
       - name: Create release
-        uses: ncipollo/release-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1.14.0
         with:
           artifacts: releases/adf_addon.zip
-          tag: ${{ github.sha }}
-          name: Release ${{ github.sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Release ${{ github.run_number }}
+          tag: ${{ github.run_number }}
+          token: GITHUB_TOKEN
