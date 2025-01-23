@@ -14,18 +14,23 @@ def adf_read(file_path: str):
         data = file.read()
 
     header_data = __get_header_data(data)
-    
-    #Collect all chunks
     all_chunks = __get_all_data_chunks_from_data(data,header_data)
-    
-    #Organize chunks, then instantaite them.
+
+    model_chunk, texture_chunks, node_chunk, link_chunk, texture_json_chunk = __organize_chunks(all_chunks)
+
+    __instantiate_model_from_chunk(model_chunk)
+
     return
 
 def __get_all_data_chunks_from_data(data: bytes,header: HeaderData) -> list[GenericChunkData]:
+    """All chunks except header chunk."""
     chunks_collection: list[GenericChunkData] = []
 
-    # number of chunks is models (always 1) + textures (variable) + mat links(1) + mat nodes(1) + tex names (1)
-    total_chunks_count = header.textures + 4
+    # When no textures/materials present, there is only model chunk.
+    if (header.textures >= 1) and (header.materials >= 1):
+        total_chunks_count = header.textures + 4
+    else:
+        total_chunks_count = 1
 
     offset = 17
     for i in range(0,total_chunks_count):
@@ -55,14 +60,39 @@ def __get_header_data(data: bytes) -> HeaderData:
     return HeaderData(magic,version,models,textures,materials)
 
 def __organize_chunks(chunks: list[GenericChunkData]):
+    """From all chunks (except header), organize into model, texture, node, etc."""
     model_chunk = None
     texture_chunks: list[GenericChunkData] = []
+    node_chunk = None
+    link_chunk = None
+    texture_json_chunk = None
+
     for c in chunks:
-        if (c.chunk_type >= ChunkType.MODEL_OBJ) and (c.chunk_type <= ChunkType.MODEL_FBX):
+        c_type = c.chunk_type
+        if (c_type >= ChunkType.MODEL_OBJ) and (c_type <= ChunkType.MODEL_FBX):
             model_chunk = c
-        elif (c.chunk_type >= ChunkType.TEXTURE_PNG) and (c.chunk_type <= ChunkType.TEXTURE_IRIS):
+        elif (c_type >= ChunkType.TEXTURE_PNG) and (c_type <= ChunkType.TEXTURE_IRIS):
             texture_chunks.append(c)
-        #repeat for nodes, links, tex names
+        elif (c_type == ChunkType.MATERIALS_NODES_JSON):
+            node_chunk = c
+        elif (c_type == ChunkType.MATERIALS_NODES_JSON):
+            link_chunk = c
+        elif (c_type == ChunkType.MATERIALS_TEXTURES_JSON):
+            texture_json_chunk = c
+        else:
+            log(f"Chunk of type {ChunkType(c_type)} not organized!","ERROR")
+
+    return model_chunk, texture_chunks, node_chunk, link_chunk, texture_json_chunk
+
+def __instantiate_model_from_chunk(model_chunk: GenericChunkData):
+    with tempfile.NamedTemporaryFile(suffix=".file", delete=False) as temp_file:
+        temp_file_path = temp_file.name
+
+    with open(temp_file_path,"wb") as f:
+        f.write(model_chunk.chunk_data)
+    
+    bpy.ops.wm.obj_import(filepath=temp_file_path)
+    return
 
 def __instantiate_images(texture_data_collection: list[bytes]):
     for tex in texture_data_collection:

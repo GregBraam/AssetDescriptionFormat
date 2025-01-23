@@ -9,45 +9,56 @@ from .adf_errors import MissingImageData
 import string
 import json
 
-def adf_write(path: str,export_selection,texture_quality: int,texture_format):
+def adf_write(path: str,export_selection: bool,texture_quality: int,texture_format):
     counter = IDCounter(1)
 
-    if export_selection:
-        objects = bpy.context.selected_objects
-    else:
-        objects = bpy.context.scene.objects
-
-    number_of_models = __get_number_of_models(objects)
-    number_of_textures = __get_number_of_textures(objects)
-    number_of_materials = __get_number_of_materials(objects)
-    header_bytes = __generate_header_bytes(number_of_models,number_of_textures,number_of_materials)
-
-    obj_file_data = __get_obj_file_data(export_selection)
-    model_chunk_bytes = __generate_chunk_bytes(obj_file_data,counter.next_id(),ChunkType.MODEL_OBJ)
+    objects = __get_objects_selection(export_selection)
+    header_bytes = __create_header_bytes(objects)
+    model_chunk_bytes = __create_model_chunk_bytes(export_selection, counter)
 
     textures = __get_textures(objects)
     try:
         texture_chunks_bytes = __generate_all_texture_bytes(textures, texture_quality, texture_format, counter)
     except MissingImageData as error:
         raise error
+    
+    if (__get_number_of_textures(objects) >= 1) and (__get_number_of_materials(objects) >= 1):
+        materials = __get_materials(objects)
+        mat_nodes = bytearray(serialize_all_material_nodes(materials),"utf-8")
+        mat_links = bytearray(serialize_all_material_links(materials),"utf-8")
+        nodes_chunk_bytes = __generate_chunk_bytes(mat_nodes,counter.next_id(),ChunkType.MATERIALS_NODES_JSON)
+        links_chunk_bytes = __generate_chunk_bytes(mat_links,counter.next_id(),ChunkType.MATERIALS_LINKS_JSON)
 
-    materials = __get_materials(objects)
-    mat_nodes = bytearray(serialize_all_material_nodes(materials),"utf-8")
-    mat_links = bytearray(serialize_all_material_links(materials),"utf-8")
-    nodes_chunk_bytes = __generate_chunk_bytes(mat_nodes,counter.next_id(),ChunkType.MATERIALS_NODES_JSON)
-    links_chunk_bytes = __generate_chunk_bytes(mat_links,counter.next_id(),ChunkType.MATERIALS_LINKS_JSON)
-
-    texture_names_bytes = bytearray(__get_texture_names(textures),"utf-8")
-    texture_names_chunk_bytes = __generate_chunk_bytes(texture_names_bytes,counter.next_id(),ChunkType.MATERIALS_TEXTURES_JSON)
+        texture_names_bytes = bytearray(__get_texture_names(textures),"utf-8")
+        texture_names_chunk_bytes = __generate_chunk_bytes(texture_names_bytes,counter.next_id(),ChunkType.MATERIALS_TEXTURES_JSON)
 
     with open(path,"wb") as file:
         file.write(header_bytes)
         file.write(model_chunk_bytes)
-        file.write(texture_chunks_bytes)
+        if (__get_number_of_textures(objects) >= 1) and (__get_number_of_materials(objects) >= 1):
+            file.write(texture_chunks_bytes)
 
-        file.write(nodes_chunk_bytes)
-        file.write(links_chunk_bytes)
-        file.write(texture_names_chunk_bytes)
+            file.write(nodes_chunk_bytes)
+            file.write(links_chunk_bytes)
+            file.write(texture_names_chunk_bytes)
+
+def __create_header_bytes(objects: list[bpy.types.Object]) -> bytes:
+    number_of_models = __get_number_of_models(objects)
+    number_of_textures = __get_number_of_textures(objects)
+    number_of_materials = __get_number_of_materials(objects)
+    header_bytes = __generate_header_bytes(number_of_models,number_of_textures,number_of_materials)
+    return header_bytes
+
+def __create_model_chunk_bytes(export_selection: bool, counter: IDCounter) -> bytes:
+    obj_file_data = __get_obj_file_data(export_selection)
+    model_chunk_bytes = __generate_chunk_bytes(obj_file_data,counter.next_id(),ChunkType.MODEL_OBJ)
+    return model_chunk_bytes
+
+def __get_objects_selection(export_selection: bool) -> list[bpy.types.Object]:
+    if export_selection:
+        return bpy.context.selected_objects
+    else:
+        return bpy.context.scene.objects    
 
 #region header data collection
 
