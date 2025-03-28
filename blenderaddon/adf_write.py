@@ -158,7 +158,9 @@ def __get_texture_names(textures: list[bpy.types.Texture]) -> str:
     texture_names: list[str] = []
 
     for tex in textures:
-        texture_names.append(tex.name)
+        texture_names.append(tex.image.name)
+        #print(tex.image.file_format)
+        #TODO: add file extension to texture name.
 
     json_string: str = json.dumps(texture_names,indent=4)
     return json_string

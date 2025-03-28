@@ -19,6 +19,7 @@ def adf_read(file_path: str):
     model_chunk, texture_chunks, node_chunk, link_chunk, texture_json_chunk = __organize_chunks(all_chunks)
 
     __instantiate_model_from_chunk(model_chunk)
+    __instantiate_images(texture_chunks,texture_json_chunk)
 
     return
 
@@ -75,12 +76,12 @@ def __organize_chunks(chunks: list[GenericChunkData]):
             texture_chunks.append(c)
         elif (c_type == ChunkType.MATERIALS_NODES_JSON):
             node_chunk = c
-        elif (c_type == ChunkType.MATERIALS_NODES_JSON):
+        elif (c_type == ChunkType.MATERIALS_LINKS_JSON):
             link_chunk = c
         elif (c_type == ChunkType.MATERIALS_TEXTURES_JSON):
             texture_json_chunk = c
         else:
-            log(f"Chunk of type {ChunkType(c_type)} not organized!","ERROR")
+            log(f"Organize Chunks: Chunk of type {ChunkType(c_type)} not organized!","ERROR")
 
     return model_chunk, texture_chunks, node_chunk, link_chunk, texture_json_chunk
 
@@ -94,11 +95,18 @@ def __instantiate_model_from_chunk(model_chunk: GenericChunkData):
     bpy.ops.wm.obj_import(filepath=temp_file_path)
     return
 
-def __instantiate_images(texture_data_collection: list[bytes]):
-    for tex in texture_data_collection:
-        print(tex)
+def __instantiate_images(texture_data_collection: list[GenericChunkData], texture_names: GenericChunkData):
+
+    # Get texture names from json.
+    # Set temp file name, name of image in blender is from 
+
+    for i in range(0,len(texture_data_collection)):
+        tex_data = texture_data_collection[i]
+
+        __instantiate_image(tex_data.chunk_data)
 
 def __instantiate_image(texture_data: bytes):
+    #TODO: change tempfile name to actual name.
     with tempfile.NamedTemporaryFile(suffix=".file", delete=False) as temp_file:
         temp_file_path = temp_file.name
 
